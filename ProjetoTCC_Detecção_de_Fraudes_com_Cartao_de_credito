@@ -1,1 +1,920 @@
+# ============================================================
+# TCC - MBA Data Science USP/ESALQ
+# Detecção de Fraudes com Cartões de Crédito
+# Modelo: Regressão Logística
+# ============================================================
+
+# In[ 1. Importação dos pacotes ]
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    confusion_matrix,
+    classification_report,
+    roc_auc_score,
+    roc_curve,
+    precision_recall_curve,
+    average_precision_score
+)
+
+# In[ 2. Carregar Dataset ]
+
+df = pd.read_csv('creditcard.csv')
+
+print("Dimensão do dataset:", df.shape)
+print("\nDistribuição da variável target:")
+print(df['Class'].value_counts())
+print("\nProporção:")
+print(df['Class'].value_counts(normalize=True))
+
+# In[ 3. Separação das variáveis ]
+
+X = df.drop('Class', axis=1)
+y = df['Class']
+
+# In[ 4. TRAIN / TEST SPLIT ]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.3,
+    random_state=42,
+    stratify=y
+)
+
+# In[ 5. PADRONIZAÇÃO 
+
+scaler = StandardScaler()
+
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# In[ 6. MODELO - REGRESSÃO LOGÍSTICA
+
+model = LogisticRegression(
+    class_weight='balanced',
+    max_iter=1000,
+    random_state=42
+)
+
+model.fit(X_train, y_train)
+
+# In[ 7. PREDIÇÕES ]
+
+y_pred = model.predict(X_test)
+y_proba = model.predict_proba(X_test)[:, 1]
+
+# In[ 8. MÉTRICAS ]
+
+print("\n===== Classification Report =====")
+print(classification_report(y_test, y_pred))
+
+roc_auc = roc_auc_score(y_test, y_proba)
+pr_auc = average_precision_score(y_test, y_proba)
+
+print(f"\nROC-AUC: {roc_auc:.2f}")
+print(f"PR-AUC: {pr_auc:.2f}")
+
+# In[ 9. MATRIZ DE CONFUSÃO ]
+
+cm = confusion_matrix(y_test, y_pred)
+
+plt.figure(figsize=(6,5))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+plt.title('Matriz de Confusão - Regressão Logística')
+plt.xlabel('Predito')
+plt.ylabel('Real')
+plt.show()
+
+# In[ 10. CURVA ROC ]
+
+fpr, tpr, _ = roc_curve(y_test, y_proba)
+
+plt.figure(figsize=(6,5))
+plt.plot(fpr, tpr, label=f'ROC AUC = {roc_auc:.2f}')
+plt.plot([0,1], [0,1], linestyle='--')
+plt.xlabel('FPR', fontsize=16)
+plt.ylabel('TPR', fontsize=16)
+plt.title('Regressão Logística', fontsize=18)
+plt.legend(fontsize=14)
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
+plt.show()
+
+
+# In[ 11. CURVA PRECISION-RECALL ]
+
+precision, recall, _ = precision_recall_curve(y_test, y_proba)
+
+plt.figure(figsize=(6,5))
+plt.plot(recall, precision, label=f'PR AUC = {pr_auc:.2f}')
+plt.xlabel('Sensibilidade',fontsize=16)
+plt.ylabel('Precisão',fontsize=16)
+plt.title('Regressão Logística',fontsize=18)
+plt.legend(fontsize=14)
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
+plt.show()
+
+
+# In[ 12. TABELA RESUMO ]
+
+results_logistic = pd.DataFrame({
+    'Modelo': ['Regressão Logística'],
+    'ROC_AUC': [roc_auc],
+    'PR_AUC': [pr_auc]
+})
+
+print("\n===== Tabela Resumo =====")
+print(results_logistic)
+
+
+# ============================================================
+# TCC - MBA Data Science USP/ESALQ
+# Detecção de Fraudes com Cartões de Crédito
+# Modelo: Random Forest
+# ============================================================
+
+# In[ 1. Importação dos pacotes ]
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import (
+    confusion_matrix,
+    classification_report,
+    roc_auc_score,
+    roc_curve,
+    precision_recall_curve,
+    average_precision_score
+)
+
+# In[ 2. CARREGAR DATASET ]
+
+df = pd.read_csv('creditcard.csv')
+
+print("Dimensão do dataset:", df.shape)
+print("\nDistribuição da variável target:")
+print(df['Class'].value_counts())
+print("\nProporção:")
+print(df['Class'].value_counts(normalize=True))
+
+
+# In[ 3. SEPARAR VARIÁVEIS ]
+
+X = df.drop('Class', axis=1)
+y = df['Class']
+
+
+# In[ 4. TRAIN / TEST SPLIT ]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.3,
+    random_state=42,
+    stratify=y
+)
+
+# In[ 4.1. PADRONIZAÇÃO ]
+
+scaler = StandardScaler()
+
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# In[ 5. MODELO - RANDOM FOREST ]
+
+model = RandomForestClassifier(
+    n_estimators=200,
+    max_depth=None,
+    class_weight='balanced',
+    random_state=42,
+    n_jobs=-1
+)
+
+model.fit(X_train_scaled, y_train)
+
+# In[ 6. PREDIÇÕES ]
+
+y_pred = model.predict(X_test_scaled)
+y_proba = model.predict_proba(X_test_scaled)[:, 1]
+
+# In[ 7. MÉTRICAS ]
+
+print("\n===== Classification Report =====")
+print(classification_report(y_test, y_pred))
+
+roc_auc = roc_auc_score(y_test, y_proba)
+pr_auc = average_precision_score(y_test, y_proba)
+
+print(f"\nROC-AUC: {roc_auc:.2f}")
+print(f"PR-AUC: {pr_auc:.2f}")
+
+# In[ 8. MATRIZ DE CONFUSÃO ]
+
+cm = confusion_matrix(y_test, y_pred)
+
+plt.figure(figsize=(6,5))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Greens')
+plt.title('Matriz de Confusão - Random Forest')
+plt.xlabel('Predito')
+plt.ylabel('Real')
+plt.show()
+
+# In[ 9. CURVA ROC ]
+
+fpr, tpr, _ = roc_curve(y_test, y_proba)
+
+plt.figure(figsize=(6,5))
+plt.plot(fpr, tpr, label=f'ROC AUC = {roc_auc:.2f}')
+plt.plot([0,1], [0,1], linestyle='--')
+plt.xlabel('FPR', fontsize=16)
+plt.ylabel('TPR', fontsize=16)
+plt.title('Random Forest', fontsize=18)
+plt.legend(fontsize=14)
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
+plt.show()
+
+# In[ 10. CURVA PRECISION-RECALL ]
+
+precision, recall, _ = precision_recall_curve(y_test, y_proba)
+
+plt.figure(figsize=(6,5))
+plt.plot(recall, precision, label=f'PR AUC = {pr_auc:.2f}')
+plt.xlabel('Sensibilidade',fontsize=16)
+plt.ylabel('Precisão',fontsize=16)
+plt.title('Random Forest',fontsize=18)
+plt.legend(fontsize=14)
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
+plt.show()
+
+# In[ 11. IMPORTÂNCIA DAS VARIÁVEIS ]
+
+importances = model.feature_importances_
+features = X.columns
+
+importance_df = pd.DataFrame({
+    'Feature': features,
+    'Importance': importances
+}).sort_values(by='Importance', ascending=False)
+
+plt.figure(figsize=(10,6))
+sns.barplot(x='Importance', y='Feature', data=importance_df.head(15))
+plt.title('Top 15 Variáveis Mais Importantes - Random Forest')
+plt.show()
+
+# In[ 12. TABELA RESUMO ]
+
+results_rf = pd.DataFrame({
+    'Modelo': ['Random Forest'],
+    'ROC_AUC': [roc_auc],
+    'PR_AUC': [pr_auc]
+})
+
+print("\n===== Tabela Resumo =====")
+print(results_rf)
+
+
+# ============================================================
+# TCC - MBA Data Science USP/ESALQ
+# Detecção de Fraudes com Cartões de Crédito
+# Modelo: XGBoost
+# ============================================================
+
+# In[ 1. Importação dos pacotes ]
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import (
+    confusion_matrix,
+    classification_report,
+    roc_auc_score,
+    roc_curve,
+    precision_recall_curve,
+    average_precision_score
+)
+
+from sklearn.preprocessing import StandardScaler
+from xgboost import XGBClassifier
+
+# In[ 2. CARREGAR DATASET ]
+
+df = pd.read_csv('creditcard.csv')
+
+print("Dimensão do dataset:", df.shape)
+print("\nDistribuição da variável target:")
+print(df['Class'].value_counts())
+print("\nProporção:")
+print(df['Class'].value_counts(normalize=True))
+
+
+# In[ 3. SEPARAR VARIÁVEIS ]
+
+X = df.drop('Class', axis=1)
+y = df['Class']
+
+
+# In[ 4. TRAIN / TEST SPLIT ]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.3,
+    random_state=42,
+    stratify=y
+)
+
+# In[ 4.1. PADRONIZAÇÃO ]
+
+scaler = StandardScaler()
+
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# In[ 5. AJUSTE DO DESBALANCEAMENTO ]
+
+# scale_pos_weight = (negativos / positivos)
+neg = y_train.value_counts()[0]
+pos = y_train.value_counts()[1]
+scale_pos_weight = neg / pos
+
+print(f"\nScale_pos_weight: {scale_pos_weight:.2f}")
+
+# In[ 6. MODELO - XGBOOST ]
+
+model = XGBClassifier(
+    n_estimators=300,
+    max_depth=6,
+    learning_rate=0.1,
+    subsample=0.8,
+    colsample_bytree=0.8,
+    scale_pos_weight=scale_pos_weight,
+    random_state=42,
+    n_jobs=-1,
+    eval_metric='logloss',
+    use_label_encoder=False
+)
+
+model.fit(X_train_scaled, y_train)
+
+# In[ 7. PREDIÇÕES ]
+
+y_pred = model.predict(X_test_scaled)  # threshold padrão (0.5)
+y_proba = model.predict_proba(X_test_scaled)[:, 1]
+
+
+# In[ 8. MÉTRICAS ]
+
+print("\n===== Classification Report (Threshold = 0.5) =====")
+print(classification_report(y_test, y_pred))
+
+roc_auc = roc_auc_score(y_test, y_proba)
+pr_auc = average_precision_score(y_test, y_proba)
+
+print(f"\nROC-AUC: {roc_auc:.2f}")
+print(f"PR-AUC: {pr_auc:.2f}")
+
+
+# In[ 9. MATRIZ DE CONFUSÃO ]
+
+cm = confusion_matrix(y_test, y_pred)
+
+plt.figure(figsize=(6,5))
+ax = sns.heatmap(
+    cm,
+    annot=True,
+    fmt='d',
+    cmap='Greys',
+    cbar=True
+    )
+
+plt.title('XGBoost (Treshold padrão)')
+plt.xlabel('Predito')
+plt.ylabel('Real')
+
+ax.set_xticklabels(['Legítima','Fraude'])
+ax.set_yticklabels(['Legítima','Fraude'])
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ax.spines['left'].set_visible(True)
+ax.spines['bottom'].set_visible(True)
+ax.spines['left'].set_linewidth(1.5)
+ax.spines['bottom'].set_linewidth(1.5)
+ax.spines['left'].set_color('black')
+ax.spines['bottom'].set_color('black')
+
+plt.tight_layout()
+plt.show()
+
+# In[ 9. CURVA ROC ]
+
+fpr, tpr, _ = roc_curve(y_test, y_proba)
+
+plt.figure(figsize=(6,5))
+plt.plot(fpr, tpr, label=f'ROC AUC = {roc_auc:.2f}')
+plt.plot([0,1], [0,1], linestyle='--')
+plt.xlabel('FPR', fontsize=16)
+plt.ylabel('TPR', fontsize=16)
+plt.title('XGBoost', fontsize=18)
+plt.legend(fontsize=14)
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
+plt.show()
+
+# In[ 11. CURVA PRECISION-RECALL ]
+
+precision, recall, thresholds = precision_recall_curve(y_test, y_proba)
+
+plt.figure(figsize=(6,5))
+plt.plot(recall, precision, label=f'PR AUC = {pr_auc:.2f}')
+plt.xlabel('Sensibilidade',fontsize=16)
+plt.ylabel('Precisão',fontsize=16)
+plt.title('XGBoost',fontsize=18)
+plt.legend(fontsize=14)
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
+plt.show()
+
+
+# In[ 11.1 AJUSTE DE THRESHOLD ]
+
+# calcular F1 para cada threshold
+f1_scores = 2 * (precision * recall) / (precision + recall + 1e-10)
+
+# encontrar melhor índice (ignorar último ponto)
+best_idx = np.argmax(f1_scores[:-1])
+
+best_threshold = thresholds[best_idx]
+
+print(f"\nMelhor Threshold: {best_threshold:.2f}")
+print(f"Precision: {precision[best_idx]:.2f}")
+print(f"Recall: {recall[best_idx]:.2f}")
+print(f"F1-Score: {f1_scores[best_idx]:.2f}")
+
+# In[ 11.2 NOVAS PREDIÇÕES ]
+
+y_pred_adjusted = (y_proba >= best_threshold).astype(int)
+
+
+# In[ 11.3 MÉTRICAS AJUSTADAS ]
+
+print("\n===== Classification Report (Threshold Ajustado) =====")
+print(classification_report(y_test, y_pred_adjusted))
+
+
+# In[ 11.4 MATRIZ DE CONFUSÃO AJUSTADA ]
+
+cm_adj = confusion_matrix(y_test, y_pred_adjusted)
+plt.figure(figsize=(6,5))
+ax = sns.heatmap(
+    cm_adj,
+    annot=True,
+    fmt='d',
+    cmap='Greys',
+    cbar=True
+    )
+
+plt.title('XGBoost (Treshold ajustado)')
+plt.xlabel('Predito')
+plt.ylabel('Real')
+
+ax.set_xticklabels(['Legítima','Fraude'])
+ax.set_yticklabels(['Legítima','Fraude'])
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ax.spines['left'].set_visible(True)
+ax.spines['bottom'].set_visible(True)
+ax.spines['left'].set_linewidth(1.5)
+ax.spines['bottom'].set_linewidth(1.5)
+ax.spines['left'].set_color('black')
+ax.spines['bottom'].set_color('black')
+
+plt.tight_layout()
+plt.show()
+
+
+# In[ 12. IMPORTÂNCIA DAS VARIÁVEIS ]
+
+importances = model.feature_importances_
+features = X.columns
+
+importance_df = pd.DataFrame({
+    'Feature': features,
+    'Importance': importances
+}).sort_values(by='Importance', ascending=False)
+
+# selecionar top 15
+top_features = importance_df.head(15)
+
+plt.figure(figsize=(7,5))
+
+ax = plt.barh(top_features['Feature'], top_features['Importance'], color='gray')
+
+plt.xlabel('Importância')
+plt.ylabel('Variável')
+plt.title('Importância das Variáveis - XGBoost')
+
+# inverter eixo para variável mais importante ficar no topo
+plt.gca().invert_yaxis()
+
+# remover bordas superior e direita
+ax = plt.gca()
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+
+# manter apenas esquerda e inferior
+ax.spines['left'].set_linewidth(1.5)
+ax.spines['bottom'].set_linewidth(1.5)
+
+ax.spines['left'].set_color('black')
+ax.spines['bottom'].set_color('black')
+
+plt.tight_layout()
+
+plt.show()
+
+
+# In[ 13. TABELA RESUMO ]
+
+results_xgb = pd.DataFrame({
+    'Modelo': ['XGBoost'],
+    'ROC_AUC': [roc_auc],
+    'PR_AUC': [pr_auc]
+})
+
+print("\n===== Tabela Resumo =====")
+print(results_xgb)
+
+
+# ===========================================
+# TCC - MBA Data Science USP/ESALQ
+# Detecção de Fraudes com Cartões de Crédito
+# Modelo: MLP (Rede Neural Rasa - sklearn)
+# ===========================================
+   
+# In[ 1. Importação dos pacotes ]
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import (
+    confusion_matrix,
+    classification_report,
+    roc_auc_score,
+    roc_curve,
+    precision_recall_curve,
+    average_precision_score
+)
+
+from sklearn.neural_network import MLPClassifier
+from sklearn.utils.class_weight import compute_sample_weight
+
+
+# In[ 2. Carregar Dataset ]
+
+df = pd.read_csv('creditcard.csv')
+
+print("Dimensão do dataset:", df.shape)
+print("\nDistribuição da variável target:")
+print(df['Class'].value_counts())
+print("\nProporção:")
+print(df['Class'].value_counts(normalize=True))
+
+# In[ 3. Separação das variáveis ]
+
+X = df.drop('Class', axis=1)
+y = df['Class']
+
+
+# In[ 4. TRAIN / TEST SPLIT ]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.3,
+    random_state=42,
+    stratify=y
+)
+
+# In[ 5. PADRONIZAÇÃO (OBRIGATÓRIA PARA MLP) ]
+
+scaler = StandardScaler()
+
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+
+# In[ 6. MODELO - MLP]
+
+# Criar pesos para cada observação
+sample_weights = compute_sample_weight(
+    class_weight='balanced',
+    y=y_train
+)
+
+model = MLPClassifier(
+    hidden_layer_sizes=(64, 32),   # duas camadas ocultas
+    activation='relu',
+    solver='adam',
+    alpha=0.0001,                  # regularização L2
+    batch_size=256,
+    learning_rate='adaptive',
+    max_iter=50,
+    random_state=42,
+    early_stopping=True,
+    validation_fraction=0.1
+)
+
+# Treinar com pesos
+model.fit(X_train, y_train, sample_weight=sample_weights)
+
+
+# In[ 7. PREDIÇÕES ]
+
+y_pred = model.predict(X_test)
+y_proba = model.predict_proba(X_test)[:, 1]
+
+# In[ 8. MÉTRICAS ]
+
+print("\n===== Classification Report =====")
+print(classification_report(y_test, y_pred))
+
+roc_auc = roc_auc_score(y_test, y_proba)
+pr_auc = average_precision_score(y_test, y_proba)
+
+print(f"\nROC-AUC: {roc_auc:.2f}")
+print(f"PR-AUC: {pr_auc:.2f}")
+
+
+# In[ 9. MATRIZ DE CONFUSÃO ]
+
+cm = confusion_matrix(y_test, y_pred)
+
+plt.figure(figsize=(6,5))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Purples')
+plt.title('Matriz de Confusão - MLP (sklearn)')
+plt.xlabel('Predito')
+plt.ylabel('Real')
+plt.show()
+
+# In[ 10. CURVA ROC ]
+
+fpr, tpr, _ = roc_curve(y_test, y_proba)
+
+plt.figure(figsize=(6,5))
+plt.plot(fpr, tpr, label=f'ROC AUC = {roc_auc:.2f}')
+plt.plot([0,1], [0,1], linestyle='--')
+plt.xlabel('FPR', fontsize=16)
+plt.ylabel('TPR', fontsize=16)
+plt.title('MLP', fontsize=18)
+plt.legend(fontsize=14)
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
+plt.show()
+
+# In[ 11. CURVA PRECISION-RECALL ]
+
+precision, recall, _ = precision_recall_curve(y_test, y_proba)
+
+plt.figure(figsize=(6,5))
+plt.plot(recall, precision, label=f'PR AUC = {pr_auc:.2f}')
+plt.xlabel('Sensibilidade',fontsize=16)
+plt.ylabel('Precisão',fontsize=16)
+plt.title('MLP',fontsize=18)
+plt.legend(fontsize=14)
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
+plt.show()
+
+# In[ 12. TABELA RESUMO ]
+
+results_mlp = pd.DataFrame({
+    'Modelo': ['MLP (sklearn)'],
+    'ROC_AUC': [roc_auc],
+    'PR_AUC': [pr_auc]
+})
+
+print("\n===== Tabela Resumo =====")
+print(results_mlp)
+
+
+# ============================================================
+# TCC - MBA Data Science USP/ESALQ
+# Detecção de Fraudes com Cartões de Crédito
+# Modelo: Deep Learning (Keras / TensorFlow)
+# ============================================================
+
+# In[ 1. Importação dos pacotes ]
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import (
+    confusion_matrix,
+    classification_report,
+    roc_auc_score,
+    roc_curve,
+    precision_recall_curve,
+    average_precision_score
+)
+
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+
+# In[ 2. CARREGAR DATASET ]
+
+df = pd.read_csv('creditcard.csv')
+
+print("Dimensão do dataset:", df.shape)
+print("\nDistribuição da variável target:")
+print(df['Class'].value_counts())
+
+# In[ 3. SEPARAR VARIÁVEIS ]
+
+X = df.drop('Class', axis=1)
+y = df['Class']
+
+# In[ 4. TRAIN / TEST SPLIT ]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.3,
+    random_state=42,
+    stratify=y
+)
+
+
+# In[ 5. PADRONIZAÇÃO ]
+
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# In[ 6. TRATAR DESBALANCEAMENTO ]
+
+neg = y_train.value_counts()[0]
+pos = y_train.value_counts()[1]
+total = neg + pos
+
+class_weight = {
+    0: total / (2 * neg),
+    1: total / (2 * pos)
+}
+
+print("Class weights:", class_weight)
+
+# In[ 7. CONSTRUIR REDE NEURAL ]
+
+model = keras.Sequential([
+    layers.Dense(128, activation='relu', input_shape=(X_train.shape[1],)),
+    layers.BatchNormalization(),
+    layers.Dropout(0.3),
+
+    layers.Dense(64, activation='relu'),
+    layers.BatchNormalization(),
+    layers.Dropout(0.3),
+
+    layers.Dense(32, activation='relu'),
+    layers.Dropout(0.2),
+
+    layers.Dense(1, activation='sigmoid')
+])
+
+model.compile(
+    optimizer=keras.optimizers.Adam(learning_rate=0.001),
+    loss='binary_crossentropy',
+    metrics=['accuracy']
+)
+
+model.summary()
+
+# In[ 8. TREINAMENTO ]
+
+early_stop = keras.callbacks.EarlyStopping(
+    monitor='val_loss',
+    patience=5,
+    restore_best_weights=True
+)
+
+history = model.fit(
+    X_train,
+    y_train,
+    epochs=50,
+    batch_size=512,
+    validation_split=0.2,
+    class_weight=class_weight,
+    callbacks=[early_stop],
+    verbose=1
+)
+
+# In[ 9. PREDIÇÕES ]
+
+y_proba = model.predict(X_test).ravel()
+y_pred = (y_proba > 0.5).astype(int)
+
+
+# In[ 10. MÉTRICAS ]
+
+print("\n===== Classification Report =====")
+print(classification_report(y_test, y_pred))
+
+roc_auc = roc_auc_score(y_test, y_proba)
+pr_auc = average_precision_score(y_test, y_proba)
+
+print(f"\nROC-AUC: {roc_auc:.2f}")
+print(f"PR-AUC: {pr_auc:.2f}")
+
+# In[ 11. MATRIZ DE CONFUSÃO ]
+
+cm = confusion_matrix(y_test, y_pred)
+
+plt.figure(figsize=(6,5))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Reds')
+plt.title('Matriz de Confusão - Deep Learning')
+plt.xlabel('Predito')
+plt.ylabel('Real')
+plt.show()
+
+
+# In[ 12. CURVA ROC ]
+
+fpr, tpr, _ = roc_curve(y_test, y_proba)
+
+plt.figure(figsize=(6,5))
+plt.plot(fpr, tpr, label=f'ROC AUC = {roc_auc:.2f}')
+plt.plot([0,1], [0,1], linestyle='--')
+plt.xlabel('FPR', fontsize=16)
+plt.ylabel('TPR', fontsize=16)
+plt.title('Deep Learning', fontsize=18)
+plt.legend(fontsize=14)
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
+plt.show()
+
+# In[ 13. CURVA PRECISION-RECALL ]
+
+precision, recall, _ = precision_recall_curve(y_test, y_proba)
+
+plt.figure(figsize=(6,5))
+plt.plot(recall, precision, label=f'PR AUC = {pr_auc:.2f}')
+plt.xlabel('Sensibilidade',fontsize=16)
+plt.ylabel('Precisão',fontsize=16)
+plt.title('Deep Learning',fontsize=18)
+plt.legend(fontsize=14)
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
+plt.show()
+
+# In[ 14. HISTÓRICO DE TREINAMENTO ]
+
+plt.figure(figsize=(8,5))
+plt.plot(history.history['loss'], label='Train Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title('Loss durante o Treinamento')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend()
+plt.show()
+
+# In[ 15. TABELA RESUMO ]
+
+results_dl = pd.DataFrame({
+    'Modelo': ['Deep Learning (Keras)'],
+    'ROC_AUC': [roc_auc],
+    'PR_AUC': [pr_auc]
+})
+
+print("\n===== Tabela Resumo =====")
+print(results_dl)
+
+
+
+
+
+
+
 
